@@ -1,0 +1,42 @@
+version: '3'
+
+networks:
+  kafkastreamsinspring_network:
+
+services:
+
+  zookeeper1:
+    container_name: zookeeper1
+    hostname: zookeeper1
+    image: zookeeper
+    environment:
+    - ZOO_MY_ID=1
+    - ZOO_PORT=2181
+    - ZOO_SERVERS=server.1=zookeeper1:2888:3888
+    ports:
+    - 2181:2181
+    # volumes:
+    # - /mnt/sda1/kafkainspring/zookeeper1/data:/data
+    # - /mnt/sda1/kafkainspring/zookeeper1/datalog:/datalog
+    networks:
+    - kafkastreamsinspring_network
+
+  kafka1:
+    image: wurstmeister/kafka
+    container_name: kafka1
+    hostname: kafka1
+    environment:
+    - KAFKA_BROKER_ID=1
+    - KAFKA_ZOOKEEPER_CONNECT=zookeeper1:2181
+    - KAFKA_PORT=9091
+    - KAFKA_LISTENERS=PLAINTEXT://kafka1:9091
+    # name:partitions:replicas:cleanup.policy
+    - KAFKA_CREATE_TOPICS=payments:1:1,orders:1:1,customers:1:1
+    ports:
+    - 9091:9091
+    # volumes:
+    # - /mnt/sda1/kafkainspring/kafka1/data:/data
+    networks:
+    - kafkastreamsinspring_network
+    depends_on:
+    - zookeeper1
