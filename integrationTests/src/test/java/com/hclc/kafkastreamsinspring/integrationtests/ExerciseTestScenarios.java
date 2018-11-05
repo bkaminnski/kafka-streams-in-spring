@@ -16,9 +16,10 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.math.BigDecimal;
 
-import static com.hclc.kafkastreamsinspring.integrationtests.orders.OrderIdProvider.randomOrderIdForMismatchedPayment;
-import static com.hclc.kafkastreamsinspring.integrationtests.orders.OrderIdProvider.randomOrderIdForSuccessfulPayment;
+import static com.hclc.kafkastreamsinspring.integrationtests.payments.PaymentAmountProvider.randomAmountForMismatchedPayment;
+import static com.hclc.kafkastreamsinspring.integrationtests.payments.PaymentAmountProvider.randomAmountForSuccessfulPayment;
 import static com.hclc.kafkastreamsinspring.integrationtests.payments.PaymentType.PayPal;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ExerciseTestScenarios {
@@ -46,7 +47,7 @@ public class ExerciseTestScenarios {
     @Test
     public void whenPaymentIsCompletedSuccessfully_shouldSendPositiveEmailNotification() throws MessagingException {
         payment = new PaymentsService().createPayment(
-                new Payment(randomOrderIdForSuccessfulPayment(), customer.getCustomerId(), new BigDecimal("123.56"), PayPal)
+                new Payment(randomUUID().toString(), customer.getCustomerId(), new BigDecimal(randomAmountForSuccessfulPayment()), PayPal)
         );
 
         assertThatEmailNotificationIsPositive();
@@ -55,7 +56,7 @@ public class ExerciseTestScenarios {
     @Test
     public void whenPaymentIsCompletedWithMismatch_shouldSendNegativeEmailNotification() throws MessagingException {
         Payment payment = new PaymentsService().createPayment(
-                new Payment(randomOrderIdForMismatchedPayment(), customer.getCustomerId(), new BigDecimal("123.56"), PayPal)
+                new Payment(randomUUID().toString(), customer.getCustomerId(), new BigDecimal(randomAmountForMismatchedPayment()), PayPal)
         );
 
         assertThatEmailNotificationIsNegative();
