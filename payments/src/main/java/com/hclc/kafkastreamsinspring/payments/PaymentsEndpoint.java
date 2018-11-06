@@ -1,5 +1,7 @@
 package com.hclc.kafkastreamsinspring.payments;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -15,14 +17,17 @@ import java.util.UUID;
 public class PaymentsEndpoint {
 
     @Autowired
-    private KafkaTemplate<String, Payment> template;
+    private KafkaTemplate<String, String> template;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @PostMapping
     @Transactional
-    public ResponseEntity<Payment> accept(@RequestBody Payment payment) {
+    public ResponseEntity<Payment> accept(@RequestBody Payment payment) throws JsonProcessingException {
         payment.setPaymentId(UUID.randomUUID().toString());
         payment.setPaymentDate(new Date());
-        template.send("payments", payment.getOrderId(), payment);
+        template.send("payments", payment.getOrderId(), objectMapper.writeValueAsString(payment));
         return ResponseEntity.ok(payment);
     }
 }

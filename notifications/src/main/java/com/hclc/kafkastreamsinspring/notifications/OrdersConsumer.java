@@ -6,11 +6,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-public class CustomersConsumer {
+public class OrdersConsumer {
 
     @Transactional
-    @KafkaListener(topics = "customers")
+    @KafkaListener(topics = "orders")
     public void consume(ConsumerRecord<String, String> record) {
-        System.out.println("customer = " + record.value());
+        System.out.println("order = " + record.value());
     }
 }

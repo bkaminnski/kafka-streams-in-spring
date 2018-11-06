@@ -1,7 +1,5 @@
 package com.hclc.kafkastreamsinspring.integrationtests.payments;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,7 +7,6 @@ public class Payment {
 
     private String paymentId, orderId, customerId;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private Date paymentDate;
 
     private BigDecimal amountReceived;
