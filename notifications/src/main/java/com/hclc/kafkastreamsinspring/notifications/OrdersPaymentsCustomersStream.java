@@ -6,11 +6,16 @@ import com.hclc.kafkastreamsinspring.payments.Payment;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.hclc.kafkastreamsinspring.notifications.SerdeFactory.serdeForType;
+import static com.hclc.kafkastreamsinspring.orders.OrderStatus.PAID;
 import static org.apache.kafka.common.serialization.Serdes.String;
 
 @Component
@@ -20,8 +25,11 @@ public class OrdersPaymentsCustomersStream {
 
     private static final int MINUTE = 60 * 1000;
 
+    private JavaMailSender emailSender;
+
     @Autowired
-    public OrdersPaymentsCustomersStream(StreamsBuilder streamBuilder) {
+    public OrdersPaymentsCustomersStream(StreamsBuilder streamBuilder, JavaMailSender emailSender) {
+        this.emailSender = emailSender;
         initializeStream(streamBuilder);
     }
 
@@ -47,8 +55,43 @@ public class OrdersPaymentsCustomersStream {
                 .peek((k, v) -> log.fine("key = " + k + "; notification (order, payment) = " + v))
                 .join(customers, (k, v) -> k, (n, c) -> n.setCustomer(c))
                 .selectKey((k, v) -> v.getOrder().getOrderId())
-                .peek((k, v) -> log.fine("key = " + k + "; notification (order, payment, customer) = " + v))
-                .foreach((k, v) -> log.fine("key = " + k + "; notification = " + v));
+                .peek((k, v) -> {
+                    log.fine("key = " + k + "; notification (order, payment, customer) = " + v);
+                })
+                .foreach((k, v) -> sendEmail(v));
     }
 
+    private void sendEmail(Notification notification) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(notification.getCustomer().getEmail());
+            message.setSubject("Order Notification");
+            message.setText(emailBody(notification));
+            log.fine("sendEmail - before " + notification);
+            emailSender.send(message);
+            log.fine("sendEmail - after");
+        } catch (MailException mailException) {
+            log.log(Level.SEVERE, "Error sending email", mailException);
+        }
+    }
+
+    private String emailBody(Notification notification) {
+        Customer customer = notification.getCustomer();
+        Order order = notification.getOrder();
+        Payment payment = notification.getPayment();
+
+        return "Dear " +
+                customer.getName() +
+                "," +
+                (order.getOrderStatus() == PAID
+                        ? " Payment for your order was successfully processed."
+                        : " Unfortunately there was a problem processing your payment. Our support will contact you.") +
+                " Order ID: " +
+                order.getOrderId() +
+                (order.getOrderStatus() == PAID
+                        ? " Total order value: " + order.getTotalValue()
+                        : " Amount received: " + payment.getAmountReceived()) +
+                " Payment type: " +
+                payment.getPaymentType();
+    }
 }

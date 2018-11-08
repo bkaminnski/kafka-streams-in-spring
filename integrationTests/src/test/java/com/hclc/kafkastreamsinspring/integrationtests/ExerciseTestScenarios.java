@@ -7,8 +7,7 @@ import com.hclc.kafkastreamsinspring.integrationtests.payments.PaymentsService;
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.GreenMailUtil;
 import com.icegreen.greenmail.util.ServerSetup;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,28 +18,26 @@ import java.math.BigDecimal;
 import static com.hclc.kafkastreamsinspring.integrationtests.payments.PaymentAmountProvider.randomAmountForMismatchedPayment;
 import static com.hclc.kafkastreamsinspring.integrationtests.payments.PaymentAmountProvider.randomAmountForSuccessfulPayment;
 import static com.hclc.kafkastreamsinspring.integrationtests.payments.PaymentType.PayPal;
+import static com.icegreen.greenmail.util.ServerSetup.PROTOCOL_SMTP;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ExerciseTestScenarios {
 
-    private static GreenMail greenMail;
+    private static final int SECOND = 1000;
+    private GreenMail greenMail;
     private Customer customer;
     private Payment payment;
 
-    @BeforeAll
-    public static void beforeAll() {
-        greenMail = new GreenMail(ServerSetup.SMTP);
-        greenMail.start();
-    }
-
     @BeforeEach
     public void beforeEach() {
+        greenMail = new GreenMail(new ServerSetup(2525, "localhost", PROTOCOL_SMTP));
+        greenMail.start();
         customer = new CustomersService().createCustomer(new Customer("Bartosz Kaminski", "bartosz.kaminski@zoho.com"));
     }
 
-    @AfterAll
-    public static void afterAll() {
+    @AfterEach
+    public void afterAll() {
         greenMail.stop();
     }
 
@@ -55,7 +52,7 @@ public class ExerciseTestScenarios {
 
     @Test
     public void whenPaymentIsCompletedWithMismatch_shouldSendNegativeEmailNotification() throws MessagingException {
-        Payment payment = new PaymentsService().createPayment(
+        payment = new PaymentsService().createPayment(
                 new Payment(randomUUID().toString(), customer.getCustomerId(), new BigDecimal(randomAmountForMismatchedPayment()), PayPal)
         );
 
@@ -91,7 +88,7 @@ public class ExerciseTestScenarios {
     }
 
     private MimeMessage readFirstEmail() {
-        greenMail.waitForIncomingEmail(5000, 1);
+        greenMail.waitForIncomingEmail(60 * SECOND, 1);
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
         assertThat(receivedMessages).hasSize(1);
         return receivedMessages[0];
