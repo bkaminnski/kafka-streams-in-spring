@@ -49,6 +49,7 @@ public class PaymentsToOrdersStream {
     private void initializeStream(StreamsBuilder streamBuilder) {
         streamBuilder
                 .stream("payments", Consumed.with(String(), paymentsSerde()))
+                .peek((k, v) -> log.fine("key = " + k + "; payment = " + v))
                 .map((k, v) -> new KeyValue<>(v.getOrderId(), new Order(
                         v.getOrderId(),
                         v.getCustomerId(),

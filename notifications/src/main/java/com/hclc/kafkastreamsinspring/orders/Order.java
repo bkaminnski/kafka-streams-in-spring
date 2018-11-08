@@ -8,13 +8,6 @@ public class Order {
     private BigDecimal totalValue;
     private OrderStatus orderStatus;
 
-    public Order(String orderId, String customerId, BigDecimal totalValue, OrderStatus orderStatus) {
-        this.orderId = orderId;
-        this.customerId = customerId;
-        this.totalValue = totalValue;
-        this.orderStatus = orderStatus;
-    }
-
     public String getOrderId() {
         return orderId;
     }
@@ -45,5 +38,15 @@ public class Order {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "orderId='" + orderId + '\'' +
+                ", customerId='" + customerId + '\'' +
+                ", totalValue=" + totalValue +
+                ", orderStatus=" + orderStatus +
+                '}';
     }
 }

@@ -9,9 +9,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
+import java.util.logging.Logger;
 
 @RestController("/customers")
 public class CustomersEndpoint {
+
+    private static final Logger log = Logger.getLogger(CustomersEndpoint.class.getName());
 
     @Autowired
     private KafkaTemplate<String, Customer> template;
@@ -21,6 +24,7 @@ public class CustomersEndpoint {
     public ResponseEntity<Customer> create(@RequestBody Customer customer) {
         customer.setCustomerId(UUID.randomUUID().toString());
         template.send("customers", customer.getCustomerId(), customer);
+        log.fine("customer = " + customer);
         return ResponseEntity.ok(customer);
     }
 }
